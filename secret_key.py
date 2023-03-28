@@ -1,1 +1,2 @@
-SECRET_KEY = "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"
+import os
+os.environ['API_SECRET_KEY'] = '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'

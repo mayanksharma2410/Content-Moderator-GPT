@@ -1,11 +1,11 @@
 import openai
-from secret_key import SECRET_KEY
+from secret_key import *
 import streamlit as st
 import docx
 from io import StringIO 
 from PIL import Image
 
-openai.api_key = SECRET_KEY
+openai.api_key = os.environ.get('API_SECRET_KEY')
 
 # Load the Document
 def load_doc(uploaded_file):
