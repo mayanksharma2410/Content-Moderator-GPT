@@ -3,6 +3,8 @@ import streamlit as st
 import docx
 from io import StringIO 
 from PIL import Image
+import io
+import zipfile
 
 openai.api_key = st.secrets["API_SECRET"]
 
@@ -31,8 +33,33 @@ def save_doc(answer, action):
     # Add a paragraph of text
     document.add_paragraph(answer)
 
-    # Save the document
-    document.save("doc_" + action + '.docx')
+    return document
+
+def save_multiple_doc(documents):
+    # Create a new in-memory buffer for the zip archive
+    zip_buffer = io.BytesIO()
+    
+    # Create a new zip archive and add the Word documents to it
+    with zipfile.ZipFile(zip_buffer, mode='w', compression=zipfile.ZIP_DEFLATED) as archive:
+        for i, document in enumerate(documents):
+            # Save each document to a temporary buffer
+            doc_buffer = io.BytesIO()
+            document.save(doc_buffer)
+            doc_buffer.seek(0)
+
+            # Add the document to the zip archive with a filename based on its index
+            archive.writestr(f'document{i+1}.docx', doc_buffer.getbuffer())
+
+    # Reset the buffer's position
+    zip_buffer.seek(0)
+
+    # Use Streamlit's download_button to download the zip archive
+    st.download_button(
+        label='Download documents as zip',
+        data=zip_buffer,
+        file_name='documents.zip',
+        mime='application/zip'
+    )
 
 # Function to use ChatGPT api
 def chatgpt_api(query):
@@ -70,7 +97,7 @@ if action == "Correction":
 elif action == "Translation":
     lang = st.radio("Please select the translation language of your document?", ("Hindi", "English", "Urdu"))
     if lang:
-        query = "Please translation the article to " + lang + " and make it better"
+        query = "Please translation the article to " + lang + " and make it better also separate paragraphs"
 elif action == 'Custom':
     query = st.text_input("Write the prompt")
 
@@ -90,6 +117,7 @@ if st.button("Analyze"):
             st.write("______________________________________")
             st.subheader(action)
             st.write(answer)
+            all_docs = []
             if thread_status:
                 load_screen = 1
                 while load_screen == 1:
@@ -99,8 +127,11 @@ if st.button("Analyze"):
                         st.write("______________________________________")
                         st.subheader("Thread of the Article")
                         st.write(thread_answer)
-                save_doc(thread_answer, "Thread")
-            save_doc(answer, action)
+                thread_doc = save_doc(thread_answer, "Thread")
+                all_docs.append(thread_doc)
+            article_doc = save_doc(answer, action)
+            all_docs.append(article_doc)
+            save_multiple_doc(all_docs)
         else:
             st.error("Please upload a document to perform any action")
 else:

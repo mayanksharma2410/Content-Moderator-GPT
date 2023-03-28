@@ -1,3 +1,4 @@
 # Read Me 
 **/README.md
 __pycache__/*
+.streamlit/*
