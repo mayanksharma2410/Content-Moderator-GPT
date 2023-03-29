@@ -72,7 +72,7 @@ def chatgpt_api(query):
 
 # Function to use ChatGPT to generate thread
 def gen_thread(article):
-    query = article + " " + "make twitter thread of 5 tweets from this article"
+    query = article + " " + "make twitter thread of 5 tweets from this article in the same language"
     output = openai.ChatCompletion.create(model = "gpt-3.5-turbo",
                                                 # system, user, assistant
                                                 messages = [{"role" : "user", "content" : query}]
@@ -85,7 +85,7 @@ st.title("Content Correction with GPT")
 gpt_image = Image.open('gpt-image.jpg')
 st.image(gpt_image)
 st.subheader("Intoduction")
-st.write("This tool leverage the power of GPT-3, Natural Language Processing to process text and translates the document into 3 languages supported, i.e. English, Hindi & Urdu. The tool even helps correcting the grammatical errors and rephrasing the content, if needed.")
+st.write("This tool leverage the power of GPT-3, Natural Language Processing to process text and translate the document into 3 languages supported, i.e. English, Hindi & Urdu. The tool even helps correcting the grammatical errors and rephrasing the content, if needed.")
 st.write("___________________________")
 
 # Form 
@@ -93,7 +93,7 @@ uploaded_file = st.file_uploader("Choose a doc file to upload", type=['docx'])
 action = st.radio("Select the action you want to take", ('Correction', 'Translation'))
 
 if action == "Correction":
-    query = "Please correct the grammar and make it better"
+    query = "Please correct the grammar of the article in the same language and make it better"
 elif action == "Translation":
     lang = st.radio("Please select the translation language of your document?", ("Hindi", "English", "Urdu"))
     if lang:
@@ -111,6 +111,13 @@ if st.button("Analyze"):
             while load_screen == 1:
                 with st.spinner("Processing data, please wait!"):
                     doc_text, heading = load_doc(uploaded_file)
+                    # Count the number of words
+                    word_count = len(doc_text.split())
+                    # Check if the word count exceeds 500
+                    if word_count > 500:
+                        st.write("Total words in the file: " + str(word_count))
+                        st.error("Error: Document word count exceeds more than 500 words")
+                        raise SystemExit
                     input = doc_text + " " + query
                     answer = chatgpt_api(input)
                     load_screen = 0
